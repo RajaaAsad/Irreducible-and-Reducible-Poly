@@ -1,0 +1,109 @@
+import tkinter as tk
+import math
+from sympy import Poly, Symbol, gcd
+
+class Window:
+    def __init__(self, master):
+        self.master = master
+        self.arr = []
+        self.coeffs = []
+
+        self.frame = tk.Frame(self.master, width=300, height=200)
+        self.frame.pack()
+
+        self.label = tk.Label(self.frame, text="Enter the Degree of Polynomial:")
+        self.label.grid(row=0, column=0, padx=10, pady=10)
+
+
+        self.entry = tk.Entry(self.frame, bd=4)
+        self.entry.grid(row=0, column=1, padx=10, pady=10)
+
+        self.btn = tk.Button(self.frame, text="Submit", command=self.submit)
+        self.btn.grid(row=1, column=0, columnspan=2, padx=10, pady=10)
+
+        self.result_label = tk.Label(self.frame, text="")
+        self.result_label.grid(row=2, column=0, columnspan=2, padx=10, pady=10)
+    
+    def submit(self):
+        self.label.grid_forget()
+        self.entry.grid_forget()
+        self.btn.grid_forget()
+
+        
+
+        self.n = int(self.entry.get())
+
+        for i in range(self.n+1):
+            entryx = tk.Entry(self.frame, width=10, bd=4)
+            entryx.grid(row=0, column=i, padx=10, pady=10)
+            self.arr.append(entryx)
+
+        checkBtn = tk.Button(self.frame, text="Check Reducible or Irreducible", command=self.check)
+        checkBtn.grid(row=1, column=0, columnspan=self.n, padx=10, pady=10)
+    
+    def check(self):
+        for entry in self.arr:
+            value = int(entry.get())
+            self.coeffs.append(value) 
+
+        primes = self.find_prime_divisors()   
+        result = self.rabin_irreducibility_test(primes)
+        print(result) 
+        if result:
+            self.result_label.config(text="The polynomial is Reducible.")
+        else:
+            self.result_label.config(text="The polynomial is Irreducible.")
+
+    def find_prime_divisors(self):
+         divisors=[]
+         x=self.n
+         for i in range(2,int(math.sqrt(x))+1):
+            if x%i==0:
+               divisors.append(i)
+               while x%i==0:
+                  x//=i
+         if x>1:
+            divisors.append(x)
+         return divisors     
+    
+    def rabin_irreducibility_test(self, primes):
+        n = len(self.coeffs) - 1
+        k = len(primes)
+        x = Symbol('x')
+        poly_coeffs = list(self.coeffs)
+
+        binary_string = ''.join(str(c) for c in self.coeffs).replace(' ', '')  # Convert coefficients to a string
+        binary_string = binary_string[::-1]  # Reverse the string to match the polynomial representation
+
+        try:
+            f = Poly(binary_string, x, domain='GF(2)')
+        except Exception as e:
+            return True
+
+        n_arr = [0] * k
+
+        for j in range(k):
+            n_arr[j] = n // primes[j]
+
+        sorted(n_arr)
+        for i in range(k):
+            try:
+                h = (x**(2**n_arr[j]) - x) % f
+                g = gcd(f, h)
+            except Exception as e:
+                return True
+
+            if g != 1:
+                return True
+
+        g = (x**(2**n) - x) % f
+
+        if g == 0:
+            return False
+        else:
+            return True
+
+root = tk.Tk()
+root.title("Rabin's Test of Irreducible")
+win = Window(root)
+root.mainloop()
